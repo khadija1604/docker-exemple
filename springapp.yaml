@@ -1,0 +1,37 @@
+kind: Service
+apiVersion: v1
+metadata:
+  name: docker-springboot-service
+spec:
+  selector:
+    app: docker-spring-boot
+  ports:
+    - protocol: "TCP"
+      # Port accessible inside cluster
+      port: 8086
+      # Port to forward to inside the pod
+      targetPort: 8085
+      # Port accessible outside cluster
+      nodePort: 30002
+  type: LoadBalancer
+  
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: docker-springboot-deployment
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: docker-spring-boot
+  template:
+    metadata:
+      labels:
+        app: docker-spring-boot
+    spec:
+      containers:
+        - name: docker-spring-boot
+          image: khadijadev/docker-spring-boot
+          ports:
+            - containerPort: 8085
+  

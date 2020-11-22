@@ -1,0 +1,44 @@
+node {
+
+    stage('checkout from scm') { 
+        // Get some code from a GitHub repository
+        git credentialsId: 'ada4e1a1-7088-4bcc-8545-aacaa9f9c2dc', url: 'https://github.com/khadija1604/docker-exemple'   
+
+    }
+
+    stage('Mvn package'){
+      // Define maven home and build project
+      def mvnHome = tool name: 'Maven', type: 'maven'
+           withEnv(["MVN_HOME=$mvnHome"]) {
+                sh '"$MVN_HOME/bin/mvn" clean package'
+        }
+
+    }
+    
+    stage('Create docker image'){
+    // Generate docker image
+     sh 'docker build -t khadijadev/docker-jenkins:1.0.0 .'                 
+    }
+    
+      stage('Push docker image'){
+     //Login to docker hub 
+        withCredentials([string(credentialsId: 'docker-p', variable: 'dockerHubCreds')]) {
+            sh "docker login -u khadijadev -p ${dockerHubCreds} "
+         }
+    
+    // Push docker image
+     sh 'docker push  khadijadev/docker-jenkins:1.0.0'                 
+    }
+    
+    stage('Run container'){
+    //To run container in remote server we can use sshAgent command to access the server as bellow: 
+    // def dockerRun = 'docker run -p 8080:8080 -d --name my-app kammana/my-app:2.0.0'
+    // sshagent(['dev-server']) {
+    // dev-server: created ssh credentials to connect to the remote server and execute the dockerRun command to run container
+    //  sh "ssh -o StrictHostKeyChecking=no ec2-user@172.31.18.198 ${dockerRun}"
+    // }
+    // in my case i don't have remote server so i'll run the command directly in my local server
+        sh 'docker run --name docker-jenkins-app -p 8085:8089 -d khadijadev/docker-jenkins:1.0.0'                          
+     }
+
+}
